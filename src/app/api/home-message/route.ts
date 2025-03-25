@@ -1,7 +1,7 @@
 import dbConnect from "@/lib/dbConnect";
 import handleResponse from "@/app/helpers/handleResponse";
 import Usermodel from "@/model/User";
-
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
     await dbConnect();

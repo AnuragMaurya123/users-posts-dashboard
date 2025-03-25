@@ -1,41 +1,32 @@
-/* eslint-disable no-var */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose";
 
 const MONGO_URL = process.env.MONGO_URL || "";
 
 if (!MONGO_URL) {
-  throw new Error("Please define the MONGO_URL environment variable");
+  throw new Error("MONGO_URL is not defined in environment variables.");
 }
 
-// Extend the global object to include `mongoose`
-declare global {
-  var mongoose: { conn: mongoose.Connection | null; promise: Promise<mongoose.Connection> | null };
-}
+// Use a cached connection to avoid re-connecting on every request
+const cached = (global as any).mongoose || { conn: null, promise: null };
 
-// Initialize `global.mongoose` if it doesn't exist
-global.mongoose = global.mongoose || { conn: null, promise: null };
-
-const dbConnect = async (): Promise<mongoose.Connection> => {
-  try {
-    if (global.mongoose.conn) {
-      console.log("Using existing database connection");
-      return global.mongoose.conn;
-    }
-
-    if (!global.mongoose.promise) {
-      console.log("Creating new database connection...");
-      global.mongoose.promise = mongoose
-        .connect(MONGO_URL)
-        .then((mongoose) => mongoose.connection);
-    }
-
-    global.mongoose.conn = await global.mongoose.promise;
-    console.log("Database connected successfully");
-    return global.mongoose.conn;
-  } catch (error) {
-    console.error("Database connection error:", error);
-    throw error;
+const dbConnect = async () => {
+  if (cached.conn) {
+    console.log("Using existing database connection");
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    console.log("Creating new database connection...");
+    cached.promise = mongoose.connect(MONGO_URL).then((mongoose) => {
+      return mongoose;
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
 };
+
+(global as any).mongoose = cached; // Store connection globally
 
 export default dbConnect;

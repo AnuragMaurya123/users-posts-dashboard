@@ -1,33 +1,41 @@
+/* eslint-disable no-var */
 import mongoose from "mongoose";
 
-// create type for connection object
-type connectionObject = {
-    isConnected?: number;
+const MONGO_URL = process.env.MONGO_URL || "";
+
+if (!MONGO_URL) {
+  throw new Error("Please define the MONGO_URL environment variable");
 }
 
-// create a connection object
-const connection: connectionObject = {};
+// Extend the global object to include `mongoose`
+declare global {
+  var mongoose: { conn: mongoose.Connection | null; promise: Promise<mongoose.Connection> | null };
+}
 
-const dbConnect = async () => {
-    // check if we have connection to our database
-    if (connection.isConnected) {
-        console.log("Already Connected to database");
-        return;
+// Initialize `global.mongoose` if it doesn't exist
+global.mongoose = global.mongoose || { conn: null, promise: null };
+
+const dbConnect = async (): Promise<mongoose.Connection> => {
+  try {
+    if (global.mongoose.conn) {
+      console.log("Using existing database connection");
+      return global.mongoose.conn;
     }
 
-    // if we don't have connection to our database
-    if (!process.env.MONGO_URL) {
-        throw new Error("Please define the MONGO_URL environment variable");
+    if (!global.mongoose.promise) {
+      console.log("Creating new database connection...");
+      global.mongoose.promise = mongoose
+        .connect(MONGO_URL)
+        .then((mongoose) => mongoose.connection);
     }
 
-    try {
-        const db = await mongoose.connect(process.env.MONGO_URL);
-        connection.isConnected = db.connections[0].readyState;
-        console.log("DB Connected Successfully");
-    } catch (error) {
-        console.error("Connection failed:", error);
-        throw error; // Let the application handle the error instead of exiting
-    }
+    global.mongoose.conn = await global.mongoose.promise;
+    console.log("Database connected successfully");
+    return global.mongoose.conn;
+  } catch (error) {
+    console.error("Database connection error:", error);
+    throw error;
+  }
 };
 
 export default dbConnect;

@@ -1,7 +1,9 @@
 {
+    "version": 2,
     "functions": {
-      "src/app/api/*": {
+      "api/*": {
         "maxDuration": 60
       }
     }
   }
+  

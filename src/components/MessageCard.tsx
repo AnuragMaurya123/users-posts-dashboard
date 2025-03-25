@@ -34,7 +34,7 @@ export default function MessageCard({ message, onMessageDelete }: MessageCardPro
     const { toast } = useToast()
     const handleDeleteMessage = async () => {
         try {
-            const response = await axios.delete<ApiResponse>(`/api/delete-message/${message._id}`)
+            const response = await axios.delete<ApiResponse>(`/api/delete-message?_id=${message._id}`)
 
             toast({
                 title: "Success",

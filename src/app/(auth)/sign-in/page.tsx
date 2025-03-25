@@ -61,7 +61,7 @@ export default function SignIn() {
          })
       }
       if(result?.url){
-        router.replace(`/dashboard/u/${values.username}`)
+        router.replace(`/dashboard`)
       }
       
      

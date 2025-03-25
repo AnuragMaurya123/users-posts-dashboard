@@ -14,13 +14,12 @@ export async function GET(request: Request) {
   try {
     //getting the username from the url
     const { searchParams } = new URL(request.url);
-    console.log(searchParams); //todo:remove this line
     const queryParams = {
       username: searchParams.get("username"),
     };
     //checking if the username is valid
     const result = UsernameQuerySchema.safeParse(queryParams);
-    console.log(result); //todo:remove this line
+
     //checking result is success & if not return error message
     if (!result.success) {
       const usernameError = result.error.format().username?._errors || [];

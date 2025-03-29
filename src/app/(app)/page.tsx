@@ -3,8 +3,8 @@ import { useToast } from "@/hooks/use-toast"
 import { ApiResponse } from "@/types/apiResponse"
 import { UserMessages } from "@/types/UserMessages"
 import axios, { AxiosError } from "axios"
-import { Copy, Loader2 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Copy } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 import {
     Carousel,
     CarouselContent,
@@ -12,14 +12,15 @@ import {
 } from "@/components/ui/carousel"
 import { Card, CardContent } from "@/components/ui/card"
 import Autoplay from "embla-carousel-autoplay"
-import useEmblaCarousel from 'embla-carousel-react'
-import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
+import { Message } from "@/model/User"
 
 export default function Home() {
     const { toast } = useToast()
+    const { data: session } = useSession()
     const [isLoading, setIsLoading] = useState(false)
     const [userMessages, setUserMessage] = useState<UserMessages[]>([])
     const copyToClipboard = (message: string) => {
@@ -31,19 +32,34 @@ export default function Home() {
         }
     }
 
+    // not showing the current user message
+    const separatingUser = useCallback((messages: {
+        username: string,
+        messages: Message[]
+    }[]) => {
+        const array = messages.filter(message => message?.username !== session?.user.username)
+        console.log(array);
+        setUserMessage(array)
+    }, [session?.user.username])
+
+    // fetching the messages
     useEffect(() => {
         const fetchHomeMessage = async () => {
             setIsLoading(true)
             try {
                 const response = await axios.get("/api/home-message")
                 if (!response.data.success) return
+                if (session?.user) {
+                    separatingUser(response.data.messages.userMessages)
+                    return
+                }
                 setUserMessage(response.data.messages.userMessages)
             } catch (error) {
                 const axiosError = error as AxiosError<ApiResponse>
                 const errorMessage = axiosError.response?.data.message
                 toast({
-                    title: "failed",
-                    description: errorMessage || "failed to get Messages",
+                    title: "Failed",  // Capitalize first letter
+                    description: errorMessage || "Failed to get messages",  // Capitalize first letter
                     variant: "destructive"
                 })
             } finally {
@@ -51,9 +67,9 @@ export default function Home() {
             }
         }
         fetchHomeMessage()
-    }, [toast])
+    }, [separatingUser, session?.user, toast])
 
-    // Add this function at the top of the file after imports
+    // function to get the relative time
     const getRelativeTime = (date: string) => {
         const now = new Date();
         const messageDate = new Date(date);
@@ -65,6 +81,8 @@ export default function Home() {
         if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
         return messageDate.toLocaleDateString();
     };
+    
+    // if loading
     if (isLoading) {
         return (
             <main className="container mx-auto px-4 py-8">
@@ -123,14 +141,14 @@ export default function Home() {
                                 const plugin = Autoplay({ delay: 2000, stopOnInteraction: true })
                                 return (
                                     <div key={index} className="bg-white rounded-lg  p-6">
-                                       <div className="flex items-center justify-between mb-4">
-                                       <h1 className="text-2xl font-bold mb-4 text-gray-800">
-                                            Messages from {userMessage.username}
-                                        </h1>
-                                        <Link href={`/u/${userMessage.username}`}>
-                                        <Button>Send message to {userMessage.username}</Button>
-                                        </Link>
-                                       </div>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h1 className="text-2xl font-bold mb-4 text-gray-800">
+                                                Messages from {userMessage.username}
+                                            </h1>
+                                            <Link href={`/u/${userMessage.username}`}>
+                                                <Button>Send message to {userMessage.username}</Button>
+                                            </Link>
+                                        </div>
                                         <div className="relative">
                                             <Carousel
                                                 opts={{
@@ -140,24 +158,28 @@ export default function Home() {
                                                 plugins={[plugin]}
                                             >
                                                 <CarouselContent className="-ml-2 md:-ml-4">
-                                                    {userMessage.messages.map((message, msgIndex) => (
-                                                        <CarouselItem
-                                                            key={msgIndex}
-                                                            className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
-                                                        >
-                                                            <Card className="border flex border-gray-200 hover:shadow-lg transition-shadow h-[200px]">
-                                                                <CardContent className="flex flex-col justify-between gap-4 p-6 w-full">
-                                                                    <div className="text-lg font-medium line-clamp-3">
-                                                                        {message.content}
-                                                                    </div>
-                                                                    <span className="text-sm text-gray-500 flex items-center justify-between">
-                                                                        <span className="" onClick={() => copyToClipboard(message.content)}><Copy /></span>
-                                                                        Received: {getRelativeTime(message.createdAt.toString())}
-                                                                    </span>
-                                                                </CardContent>
-                                                            </Card>
-                                                        </CarouselItem>
-                                                    ))}
+                                                    {userMessage.messages.length > 0 ? (
+                                                        userMessage.messages.map((message, msgIndex) => (
+                                                            <CarouselItem
+                                                                key={msgIndex}
+                                                                className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                                                            >
+                                                                <Card className="border flex border-gray-200 hover:shadow-lg transition-shadow h-[200px]">
+                                                                    <CardContent className="flex flex-col justify-between gap-4 p-6 w-full">
+                                                                        <div className="text-lg font-medium line-clamp-3">
+                                                                            {message.content}
+                                                                        </div>
+                                                                        <span className="text-sm text-gray-500 flex items-center justify-between">
+                                                                            <span className="" onClick={() => copyToClipboard(message.content)}><Copy /></span>
+                                                                            Received: {getRelativeTime(message.createdAt.toString())}
+                                                                        </span>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </CarouselItem>
+                                                        ))
+                                                    ) : (
+                                                        <div className="ml-10">Send Message to display</div>
+                                                    )}
                                                 </CarouselContent>
                                             </Carousel>
                                         </div>

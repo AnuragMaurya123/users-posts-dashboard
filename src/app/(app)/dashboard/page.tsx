@@ -1,6 +1,5 @@
 "use client"
 
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/model/User";
@@ -10,16 +9,8 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { boolean, z } from "zod"
+import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form"
 import { acceptMessageSchema } from "@/schemas/acceptMessageSchema";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RefreshCcw } from "lucide-react";
@@ -37,6 +28,7 @@ export default function Dashboard() {
   const [profileUrl, setProfileUrl] = useState<string>('')
   const { toast } = useToast()
   
+  // from zod schema
   const { register, setValue, watch } = useForm<z.infer<typeof acceptMessageSchema>>({
     resolver: zodResolver(acceptMessageSchema),
     defaultValues: {
@@ -44,6 +36,7 @@ export default function Dashboard() {
     },
   })
 
+//   generate profile url
   useEffect(() => {
     if (typeof window !== 'undefined' && username) {
       const baseUrl = `${window.location.protocol}//${window.location.host}`
@@ -51,6 +44,7 @@ export default function Dashboard() {
     }
   }, [username])
 
+  // copy profile url to clipboard
   const copyToClipboard = () => {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(profileUrl)
@@ -60,8 +54,10 @@ export default function Dashboard() {
       })
     }
   }
+  // get value from form
   const accpetMessage = watch("isAcceptingMessage")
 
+  // get message response
   const getMessageResponse = useCallback(async (refresh: boolean = false) => {
     setIsLoading(true)
     setIsSwitchLoading(true)
@@ -88,6 +84,7 @@ export default function Dashboard() {
     }
   }, [toast, setIsSwitchLoading, setIsLoading])
 
+  // get user setting
   const fetchAccpetMessage = useCallback(async () => {
     setIsSwitchLoading(true)
     try {
@@ -106,6 +103,7 @@ export default function Dashboard() {
     }
   }, [setValue, toast])
 
+  //running functions when component mounts
   useEffect(() => {
     if (!session || !session.user) return
     fetchAccpetMessage()
@@ -113,12 +111,14 @@ export default function Dashboard() {
   }, [fetchAccpetMessage, getMessageResponse, session,setValue])
 
 
+  // handle message delete
   const handleMessageDelete = (messageId: string) => {
     if (messages.length > 0) {
       setMessages(messages.filter((message: Message) => message._id !== messageId))
     }
   }
 
+  // handle switch change
   const handleSwitchChange = async () => {
     setIsLoading(true)
     try {
@@ -143,13 +143,16 @@ export default function Dashboard() {
     }
   }
 
+  // if user is not logged in
   if (!session || !session.user) {
     return <div className="">Please Login Again</div>
   }
 
   return (
+    // main container
     <div className="my-8 mx-4 md:mx-8 lg:mx-auto p-6 bg-white rounded-full w-full max-w-6xl">
       <h1 className="text-4xl font-bold mb-4">User Dashboard</h1>
+      {/*Profile Url */}
       <div className="mb-4">
         <h1 className="text-lg font-semibold mb-2">Copy your unique link</h1>{" "}
         <div className="flex item-center">
@@ -159,10 +162,12 @@ export default function Dashboard() {
             disabled
             className="input input-bordered w-full p-2 mr-2"
           />
+          {/* Button for copying url */}
           <Button onClick={copyToClipboard}>Copy</Button>
         </div>
       </div>
       <div className="mb-4">
+        {/* Switch for toggle field isAcceptingMessage */}
         <Switch
           {...register("isAcceptingMessage")}
           checked={isAcceptingMessage}
@@ -174,6 +179,7 @@ export default function Dashboard() {
         </span>
       </div>
       <Separator />
+      {/* refresh Button  */}
       <Button className="mt-4" variant={"outline"} onClick={(e) => {
         e.preventDefault()
         fetchAccpetMessage()
@@ -188,6 +194,7 @@ export default function Dashboard() {
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap6">
         {messages.length>0?(
           messages.map((message,index)=>(
+            // message card component
             <MessageCard
             key={index}
             message={message}

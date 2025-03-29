@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,8 +6,6 @@ import { useForm } from 'react-hook-form';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CardHeader, CardContent, Card } from '@/components/ui/card';
-import { useCompletion } from 'ai/react';
 import {
   Form,
   FormControl,
@@ -31,18 +28,16 @@ export default function Home() {
   const params = useParams<{ username: string }>();
   const username = params.username;
   const { toast } = useToast()
+  //
   const form = useForm<z.infer<typeof messageSchema>>({
     resolver: zodResolver(messageSchema),
   });
 
   const messageContent = form.watch('content');
   const { data: session } = useSession()
-  const handleMessageClick = (message: string) => {
-    form.setValue('content', message);
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
+  //form submitting function
   const onSubmit = async (data: z.infer<typeof messageSchema>) => {
     setIsLoading(true);
     try {

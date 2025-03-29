@@ -45,6 +45,7 @@ export default function SignForm() {
   })
 
   useEffect(() => {
+    // Define a submit handler for checking username uniqueness.
     const checkUsernameUniqueness = async () => {
       if (username) {
         setIsCheckingUsername(true)

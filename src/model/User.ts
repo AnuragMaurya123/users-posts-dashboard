@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
-
+// Define the Message interface
 export interface Message extends Document {
   content: string;
   createdAt: Date;
 }
-
+// Define the Message schema
 const messageSchema: Schema<Message> = new Schema({
   content: {
     type: String,
@@ -17,6 +17,7 @@ const messageSchema: Schema<Message> = new Schema({
   },
 });
 
+// Define the User interface
 export interface User extends Document {
   username: string;
   email: string;
@@ -28,6 +29,7 @@ export interface User extends Document {
   messages: Message[];
 }
 
+// Define the User schema
 const userSchema: Schema<User> = new Schema({
   username: {
     type: String,
@@ -69,6 +71,7 @@ const userSchema: Schema<User> = new Schema({
   messages: [messageSchema],
 });
 
+// Create the User model
 const Usermodel =
   (mongoose.models.User as mongoose.Model<User>) ||
   mongoose.model<User>("User", userSchema);

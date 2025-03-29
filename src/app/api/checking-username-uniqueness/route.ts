@@ -25,30 +25,34 @@ export async function GET(request: Request) {
       const usernameError = result.error.format().username?._errors || [];
 
       return handleResponse(400, {
-        success: false, 
-        message:  usernameError?.length > 0
-        ? usernameError.join(", ")
-        : "Invalid username", 
-      })
+        success: false,
+        message:
+          usernameError?.length > 0
+            ? usernameError.join(", ")
+            : "Invalid username",
+      });
     }
     //checking if the username is available & verifed
     const existingVerifiedUser = await Usermodel.findOne({
       username: result.data.username,
       isVerified: true,
     });
+    //returning the response if the username is not available
     if (existingVerifiedUser) {
-     
       return handleResponse(400, {
         success: false,
         message: "Username is not available",
       });
     }
+    //returning the response if the username is available
     return handleResponse(201, {
       success: true,
       message: "Username is available",
     });
   } catch (error) {
+    //logging the error
     console.log("Error in get user", error);
+    //returning the error
     return Response.json(
       {
         success: false,

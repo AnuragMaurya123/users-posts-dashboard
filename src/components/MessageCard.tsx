@@ -32,6 +32,7 @@ type MessageCardProps = {
 
 export default function MessageCard({ message, onMessageDelete }: MessageCardProps) {
     const { toast } = useToast()
+    //handle delete message
     const handleDeleteMessage = async () => {
         try {
             const response = await axios.delete<ApiResponse>(`/api/delete-message?_id=${message._id}`)
@@ -53,6 +54,7 @@ export default function MessageCard({ message, onMessageDelete }: MessageCardPro
             })
         }
     }
+    //handle copy message
     const copyToClipboard = (message: string) => {
         if (typeof window !== 'undefined') {
             navigator.clipboard.writeText(message)

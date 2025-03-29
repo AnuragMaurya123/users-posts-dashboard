@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose";
 
+export const runtime = "edge";
 const MONGO_URL = process.env.MONGO_URL || "";
 
 if (!MONGO_URL) {
